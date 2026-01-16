@@ -318,30 +318,30 @@ window.masterData = [
     // --- CATEGORY: AI & ANALYTICS ---
     {
         cat: 'AI_Services',
-        q: 'Scenario: A retail chain wants to build a "Search by Photo" feature. Customers take a picture of a dress, and the app finds the closest match in the 10-million-item catalog. They need to ground the search in their own inventory.',
-        a: 'Vertex AI Multimodal Embeddings + Vertex AI Vector Search',
-        d: '1. **Origin**: User Smartphone Photo. \n2. **Process**: Vertex AI Multimodal Embeddings API converts image to a Vector. \n3. **Retrieval**: Vertex AI Vector Search (formerly Matching Engine) performs a nearest-neighbor search. \n4. **Grounding**: Metadata retrieved from BigQuery/AlloyDB. \n5. **Persistence**: Query history saved to BigQuery for personalization.',
-        t: 'Heuristic: "Find similar items" + "Image Search" = Vector Search + Embeddings.',
-        l: 'LIMITS: Indexing lag. New catalog items may take 30-60 minutes to appear in the Vector Index.',
-        c: 'CHALLENGE: Image Quality. Users take photos in low light or bad angles; the model must be robust or the app needs a HITL review step for quality.'
+        q: 'Architect a 10M-item "Search by Photo" feature. How do you move the image data and link the Vector result back to the inventory database?',
+        a: 'GCS (Landing) -> Vertex API (Embedding) -> Vector Search (Match) -> BigQuery/AlloyDB (Grounding).',
+        d: '1. **Ingest**: Mobile app uploads photo to **Cloud Storage (GCS)** via a **Signed URL** (for security and bypassing app servers). \n2. **Embed**: A **Cloud Run** backend (triggered by GCS upload) calls the **Vertex Multimodal Embeddings API** (`multimodalembedding@001`) passing the GCS URI to get a 1408-dimension vector. \n3. **Match**: The backend calls the **Vector Search Endpoint** (`findNeighbors`) which returns the **Datapoint ID** (e.g., `SKU-9982`) of the closest match. \n4. **Ground**: The backend uses that ID as a key to query **BigQuery** or **AlloyDB** to fetch the "Human Readable" product details (Price, Stock, Description). \n5. **Sync**: In 2026, use the **BigQuery Import for Vector Search** to keep the vector index updated from the database.',
+        t: 'Heuristic: "Vector Search returns the ID; SQL returns the Answer."',
+        l: 'Indexing Lag: New items added to BigQuery aren’t searchable in Vector Search until an index rebuild or streaming update occurs (30-60 min latency).',
+        c: '2026 Tip: Use "AlloyDB AI" for sub-1M catalogs to keep the vector search *inside* the SQL database for lower latency and less architectural complexity.'
     },
     {
         cat: 'AI_Services',
-        q: 'Scenario: A bank needs to automate the extraction of data from 100,000 scanned PDFs of mortgage applications. They must redact PII before storing the data in BigQuery for risk analysis.',
-        a: 'Document AI + Sensitive Data Protection (DLP)',
-        d: '1. **Origin**: Scanned PDFs in GCS. \n2. **Extraction**: Document AI (Mortgage Parser) extracts fields (Loan Amount, Name). \n3. **Governance**: Sensitive Data Protection (formerly DLP) redacts Social Security Numbers. \n4. **Persistence**: Structured data to BigQuery; redacted PDFs to "Secure" GCS bucket.',
-        t: 'Heuristic: "Extract from Forms" = Document AI. "Scrub PII" = Sensitive Data Protection.',
-        l: 'LIMITS: Document AI works best with structured forms. Unstructured letters may require Gemini 1.5 Flash.',
-        c: 'CHALLENGE: OCR Accuracy. Faint scans lead to errors. A "Human-in-the-loop" (HITL) UI is required for low-confidence scores.'
+        q: 'Architect a 100k PDF mortgage processing pipeline with PII redaction. Compare Document AI, Vision, and Gemini for the parsing engine.',
+        a: 'Dataflow (Orchestrator) + Document AI (Parser) + Sensitive Data Protection (Redactor).',
+        d: '1. **Orchestrator (Dataflow)**: Crucial for scale. It manages parallel API calls to GCS, avoids rate limits, and provides exactly-once processing for 100k files. \n2. **Engines**: \n   - **Document AI (Mortgage Parser)**: Best for complex domain documents. Understands field relationships (e.g., "Interest Rate" vs "Loan Term"). \n   - **Document AI (Form Parser)**: Best for standard, non-industry forms (tables, key-value pairs). \n   - **Cloud Vision API**: Best for pure OCR (turning pixels to text) without needing field understanding. \n   - **Gemini 1.5 Flash (Vertex AI)**: Best for unstructured, messy docs (handwritten notes, letters) or when speed/cost are priority. \n3. **Redaction**: Dataflow sends text to **Sensitive Data Protection (DLP)** to mask SSNs before BigQuery ingestion. \n4. **Audit**: Use **HITL (Human-in-the-Loop)** tasks for files where AI "Confidence Score" falls below a threshold (e.g., < 0.8).',
+        t: 'Heuristic: "Domain Forms" = Doc AI. "Messy/Unstructured" = Gemini. "High Scale" = Dataflow.',
+        l: 'Sync vs Async: 100k docs requires "Async Batch" methods in Document AI to prevent time-outs.',
+        c: '2026 Tip: Use "Gemini 1.5 Flash" in your Dataflow pipeline to summarize long mortgage documents while Document AI extracts the specific numbers.'
     },
     {
         cat: 'AI_Services',
-        q: 'Scenario: You are building a technician support bot. It must answer questions based on thousands of PDF repair manuals. It needs to provide "grounded" answers using a LLM without retraining the model.',
-        a: 'GCS + Vertex AI Search / Vector Search (RAG)',
-        d: '1. **Source**: Store PDFs in Cloud Storage (GCS). \n2. **Embedding**: Use Vertex AI "text-embedding" models to turn text into vectors. \n3. **Storage**: Vector Search to store and retrieve high-dimensional vectors. \n4. **Generation**: Vertex AI Gemini API to summarize the retrieved context.',
-        t: 'Heuristic: "Talk to my documents" = RAG (Retrieval-Augmented Generation).',
-        l: 'Vector Search is for finding "similar" items, not for exact keyword matching.',
-        c: 'Vertex AI Search is the "managed" version that handles the embedding and indexing for you automatically.'
+        q: 'How do you build a support bot that answers from 1,000s of PDF manuals without retraining? Compare the "Managed" vs "Custom" approach.',
+        a: 'Managed: Vertex AI Search (RAG-in-a-box). Custom: GCS -> Vertex AI RAG Engine -> Vector Search.',
+        d: '1. **Managed (Best Practice)**: Use **Vertex AI Search**. It automates the "unseen" heavy lifting: OCR, document chunking, embedding generation, and metadata indexing. \n2. **Custom (Control)**: Use **Vertex AI RAG Engine**. You provide the documents in GCS, and it orchestrates the retrieval but allows you to swap out the Vector Database (e.g., Pinecone, Weaviate, or Vertex Vector Search). \n3. **Grounding**: Both methods use **Gemini 1.5 Pro/Flash** to generate answers. The "Magic" is the **Grounding Metadata** which provides citations (Page #, Manual Name) so technicians can verify the bot’s advice.',
+        t: 'Heuristic: "Talk to Docs" = Vertex AI Search. "Custom Chunking/Control" = RAG Engine.',
+        l: 'Vertex AI Search is "Turnkey" but offers less control over how text is split (chunked). Large 4K PDFs with complex diagrams may still require **Document AI Layout Parser** first.',
+        c: '2026 Tip: Use the "Check Grounding" API to verify the bot\'s answer against the manual and give it a "Trust Score" before showing it to the technician.'
     },
 
     // --- CATEGORY: GOVERNANCE & OPERATIONS ---
