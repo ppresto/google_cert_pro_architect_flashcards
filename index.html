@@ -163,7 +163,7 @@ Challenge: ${card.c}
         document.getElementById('qTag').innerText = card.cat;
         document.getElementById('aTag').innerText = card.cat + " Pattern";
         
-        qDiv.innerText = card.q;
+        qDiv.innerHTML = card.q;
         aDiv.innerHTML = `
             <div style="font-weight:700; color:var(--g-green); font-size:1.2rem; padding-right:100px;">${card.a}</div>
             <div class="solution-flow"><b>Solution Flow:</b><br>${card.d.replace(/\n/g, '<br>')}</div>
