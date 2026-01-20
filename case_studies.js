@@ -365,12 +365,16 @@ window.masterData = [
     },
     {
         cat: 'DevOps',
-        q: 'What is the current "Google-Native" recommended toolset for a secure, gated CI/CD pipeline targeting GKE?',
-        a: 'Cloud Build (CI) + Artifact Registry (Storage) + Cloud Deploy (CD).',
-        d: '1. **Cloud Build**: Triggers on Git commits, builds containers, and runs tests. \n2. **Artifact Registry**: Stores images and automatically scans them for vulnerabilities. \n3. **Cloud Deploy**: Manages the "Release" object. It handles promotions between environments and provides the "Approval" UI for Production. \n4. **Rollbacks**: If a bug is found, Cloud Deploy allows a one-click rollback to the previous "known good" release.',
-        t: 'Heuristic: "Build" = Cloud Build. "Deploy/Gate" = Cloud Deploy.',
-        l: 'Cloud Deploy is currently optimized for GKE, Cloud Run, and GEC (Compute Engine). For older legacy platforms, you might still need Jenkins.',
-        c: 'Architect Tip: Use "Binary Authorization" in conjunction with this toolset. It ensures that GKE will *refuse* to run any image that wasn\'t built by your specific Cloud Build pipeline.'
+        q: `What is the current <b>Google-Native</b> recommended toolset for a secure, gated CI/CD pipeline targeting GKE?`,
+        a: `Cloud Build (CI) + Artifact Registry (Storage) + Cloud Deploy (CD).`,
+        d: `1. <b>Cloud Build</b>: Triggers on Git commits. It compiles code, builds Docker images, and runs unit tests.
+            2. <b>Artifact Registry</b>: Stores images and automatically scans them for <b>vulnerabilities</b>. It replaces the legacy Container Registry.
+            3. <b>Cloud Deploy</b>: Manages the <b>Release</b> object and handles <b>promotions</b> between environments (e.g., Staging to Production) with a built-in approval UI.
+            4. <b>Binary Authorization</b>: The "Gatekeeper." It ensures GKE only runs images signed by Cloud Build, blocking any untrusted or manual deployments.
+            5. <b>Rollbacks</b>: Cloud Deploy allows a <b>one-click rollback</b> to the previous "known good" release state across the entire cluster.`,
+        t: `Heuristic: "Build" = Cloud Build. "Deploy/Gate" = Cloud Deploy + BinAuth.`,
+        l: `Cloud Deploy is optimized for GKE and Cloud Run. For complex multi-cloud legacy migrations, you may still require <b>Anthos</b> or <b>Jenkins</b>.`,
+        c: `Architect Tip: In 2026, the gold standard is <b>Shift Left Security</b>—using Cloud Build to perform <b>Attestations</b> (cryptographic signatures) that Binary Authorization verifies at the cluster edge.`
     },
     // --- CATEGORY: FINAL (The 10-Minute Pre-Test Sprint) ---
     {
