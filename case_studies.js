@@ -423,9 +423,12 @@ window.masterData = [
     },
     {
         cat: 'Final',
-        q: 'Trigger: What is the "Silver Bullet" for overlapping IP addresses?',
+        q: 'Trigger: What is the "Silver Bullet" for connecting two VPCs with overlapping IP addresses (e.g., 10.0.0.0/24), and why does it work?',
         a: 'Private Service Connect (PSC).',
-        t: 'Heuristic: "Overlapping IPs = PSC."'
+        d: '1. **The Problem**: VPC Peering fails if IP ranges overlap because the routing table becomes ambiguous. \n2. **The Fix**: PSC does not "peer" networks; it exposes a specific service behind a **Service Attachment** (Producer) and a **PSC Endpoint** (Consumer). \n3. **NAT Magic**: Traffic is translated (NAT) at the Google software-defined network layer (Andromeda). The Consumer only sees a local, unique IP from their own subnet, effectively "hiding" the overlapping range of the Producer. \n4. **Direction**: PSC is strictly **unidirectional** (Consumer-to-Producer).',
+        t: 'Heuristic: "Overlapping IPs = PSC." (VPC Peering = No Overlap allowed).',
+        l: 'Requires an Internal Load Balancer (ILB) on the Producer side to sit behind the Service Attachment.',
+        c: '2026 Architect Tip: PSC is now the "Managed Default." Google is moving away from Private Service Access (PSA) and Peering in favor of PSC because it eliminates IP exhaustion and overlap headaches.'
     },
     {
         cat: 'Final',
