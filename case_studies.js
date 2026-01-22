@@ -376,6 +376,43 @@ window.masterData = [
         l: `Cloud Deploy is optimized for GKE and Cloud Run. For complex multi-cloud legacy migrations, you may still require <b>Anthos</b> or <b>Jenkins</b>.`,
         c: `Architect Tip: In 2026, the gold standard is <b>Shift Left Security</b>—using Cloud Build to perform <b>Attestations</b> (cryptographic signatures) that Binary Authorization verifies at the cluster edge.`
     },
+    // --- CATEGORY: Altostrat Case Study ---
+    {
+    cat: 'Altostrat',
+    q: 'Scenario: Altostrat needs to bridge on-prem media ingestion with cloud delivery. Requirements: "Maintain a hybrid footprint for on-prem media ingestion" [TR-1], "Provide performant GKE environments both on-premises and in the cloud" [TR-2], and allow on-prem pods to securely access GCP APIs without using static JSON keys.',
+    a: 'GKE Enterprise (Anthos) + Dedicated Interconnect + Workload Identity Federation.',
+    d: '1. **Connectivity**: 10/100 Gbps Dedicated Interconnect with Cloud Router (BGP) for SLA-backed throughput [TR-1].\n2. **Orchestration**: GKE Enterprise (Anthos) provides a unified control plane for on-prem and GKE Autopilot cloud clusters [TR-2].\n3. **Identity**: Workload Identity Federation allows on-prem GKE pods to assume IAM roles via a Security Token Service (STS) to call GCP APIs securely.',
+    t: 'Heuristic: "Hybrid GKE" + "SLA-backed ingest" = GKE Enterprise + Dedicated Interconnect.',
+    l: 'Dedicated Interconnect requires physical cross-connects at a Google colocation facility (6-8 week lead time).',
+    c: 'Shared VPC should be used to provide centralized control of these hybrid network resources across multiple projects.',
+},
+{
+    cat: 'Altostrat',
+    q: 'Scenario: The library is growing rapidly and manual tagging is a bottleneck. Requirements: "Auto-generate summaries and extract metadata from media" [BR-2], ensure "AI systems must be auditable and decisions can be explained" [TR-3], and minimize API overhead for multimodal (video/image) analysis.',
+    a: 'BigQuery ML (BQML) with Gemini 1.5 Pro Remote Models.',
+    d: '1. **Trigger**: GCS Object Finalize triggers a Cloud Run function.\n2. **Intelligence**: BQML calls Gemini 1.5 Pro via a Remote Model (connection). Gemini analyzes video directly for both tags and summaries in one call [BR-2].\n3. **Audit**: Use Vertex AI Explainable AI for feature attribution and Cloud Logging for prompt/response audits [TR-3].',
+    t: 'Heuristic: "SQL-based AI" + "Multimodal Metadata" = BQML + Gemini.',
+    l: 'BQML Remote Models have concurrency limits; large batch jobs may require monitoring "job_status" for quota throttling.',
+    c: 'Gemini 1.5 Pro replaces the need for separate Vision, Video Intelligence, and Natural Language API calls.',
+},
+{
+    cat: 'Altostrat',
+    q: 'Scenario: Altostrat wants to increase engagement via a 24/7 support chatbot [BR-1]. Requirements: "Enable 24/7 user support via natural language interactions," prevent prompt injection/harmful content [TR-3], and ensure only valid subscribers can access the interface.',
+    a: 'Vertex AI Search and Conversation + Model Armor + Identity-Aware Proxy (IAP).',
+    d: '1. **Chatbot**: Vertex AI Agent grounded in the BigQuery metadata library for factual accuracy [BR-1].\n2. **Security**: Model Armor acts as a firewall for LLM prompts to filter PII and injection attacks [TR-3].\n3. **Access**: IAP validates user identity (IAM) at the HTTP layer before traffic reaches the GKE-hosted frontend.',
+    t: 'Heuristic: "Grounded Chatbot" + "AI Firewall" = Vertex AI Conversation + Model Armor.',
+    l: 'Vertex AI Search "Grounding" is only as fresh as the last BigQuery sync or data ingestion index.',
+    c: 'IAP eliminates the need for a VPN for internal/subscriber-only web access.',
+},
+{
+    cat: 'Altostrat',
+    q: 'Scenario: Storage volumes are scaling to Petabytes. Requirements: "Optimize cloud storage costs for growing media volumes" [CC-1], move from on-prem CapEx to OpEx, and ensure compute costs are only incurred during active processing.',
+    a: 'Cloud Storage Autoclass + GKE Autopilot.',
+    d: '1. **Storage**: Autoclass automatically transitions objects between Standard, Nearline, Coldline, and Archive based on access [CC-1].\n2. **Compute**: GKE Autopilot ensures you pay for Pod resource requests rather than idle underlying Node capacity.\n3. **Lifecycle**: Use specific Lifecycle Rules to delete non-critical temporary transcoding artifacts after 24 hours.',
+    t: 'Heuristic: "PB-scale cost optimization" = GCS Autoclass + GKE Autopilot.',
+    l: 'Autoclass does not support objects smaller than 128KB for automatic transitions to colder tiers.',
+    c: 'Retrieval costs (egress/access fees) for Archive class can be significant if the data is suddenly needed.',
+},
     // --- CATEGORY: FINAL (The 10-Minute Pre-Test Sprint) ---
     {
         cat: 'Final',
