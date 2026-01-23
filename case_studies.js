@@ -379,7 +379,11 @@ window.masterData = [
     // --- CATEGORY: Altostrat Case Study ---
     {
         cat: 'Altostrat',
-        q: 'Requirement Mapping: Match the following Altostrat business/technical needs to their Google Cloud Well-Architected Framework (WAF) Pillar and define the architectural intent:\n1. "Enable 24/7 user support via natural language interactions."\n2. "Maintain a hybrid footprint for on-prem media ingestion."\n3. "Optimize cloud storage costs for growing media volumes."\n4. "AI systems must be auditable and decisions can be explained."',
+        q: `Requirement Mapping: Match the following Altostrat business/technical needs to their Google Cloud Well-Architected Framework (WAF) Pillar and define the architectural intent:
+            1. "Enable 24/7 user support via natural language interactions."
+            2. "Maintain a hybrid footprint for on-prem media ingestion."
+            3. "Optimize cloud storage costs for growing media volumes."
+            4. "AI systems must be auditable and decisions can be explained."`,
         a: '1. **Performance Optimization**: Intent is to deploy GenAI Agents (Vertex AI Search and Conversation) for real-time interaction.\n2. **Reliability**: Intent is to establish SLA-backed hybrid connectivity (Dedicated Interconnect) and unified management (GKE Enterprise).\n3. **Cost Optimization**: Intent is to use automated tiering (GCS Autoclass) and lifecycle management.\n4. **Security/Operational Excellence**: Intent is to use Explainable AI and Model Armor for auditability and compliance.',
         d: 'Mapping quotes to WAF pillars ensures the architecture balances business growth with technical stability and fiscal responsibility.',
         t: 'Heuristic: If it mentions "24/7" or "Natural Language," it is a Performance requirement. If it mentions "Cost" or "TCO," it is a Cost pillar requirement.',
