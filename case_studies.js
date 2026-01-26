@@ -54,6 +54,18 @@ window.masterData = [
         l: 'If you "delete and recreate" the deployment, you will have 100% downtime during the gap.',
         c: 'Architect Tip: Always use "Readiness Probes." Without them, Kubernetes might think a pod is ready before the app has actually finished booting, causing 500 errors during the update.'
     },
+    {
+        cat: 'Compute',
+        q: `Scenario: You need to process 100k unpredictable image uploads. When is GKE Autopilot mandatory over Cloud Run, and how do you protect your database from scaling spikes?`,
+        a: `GKE for >60min tasks; Pub/Sub + Max Instances for DB protection.`,
+        d: `1. <b>Constraints</b>: Cloud Run services have a <b>60-minute</b> hard timeout. GKE Autopilot is required for longer-running tasks or specialized kernel needs.
+            2. <b>Buffer</b>: Use <b>Pub/Sub</b> to decouple ingest from processing. This prevents 100k concurrent requests from hitting the DB.
+            3. <b>Throttling</b>: Set <b>Max Instances</b> on the Cloud Run worker to limit the number of concurrent database connections.
+            4. <b>Efficiency</b>: Use <b>Cloud SQL Auth Proxy</b> and <b>Managed Connection Pooling</b> to multiplex many serverless connections into few database sessions.`,
+        t: `Heuristic: "HTTP Timeout > 60min" = GKE. "DB Protection" = Pub/Sub + Max Instances.`,
+        l: `Cloud Run scale-out is faster than GKE, but GKE offers more <b>Compute volatility</b> control with Spot Pods at massive scale.`,
+        c: `Architect Tip: For 100k bursts, use <b>Direct VPC Egress</b> instead of a Serverless VPC Connector to avoid the connector becoming a throughput bottleneck.`
+    },
 
     // --- CATEGORY: STORAGE & DATABASES ---
     {
@@ -376,6 +388,18 @@ window.masterData = [
         l: `Cloud Deploy is optimized for GKE and Cloud Run. For complex multi-cloud legacy migrations, you may still require <b>Anthos</b> or <b>Jenkins</b>.`,
         c: `Architect Tip: In 2026, the gold standard is <b>Shift Left Security</b>—using Cloud Build to perform <b>Attestations</b> (cryptographic signatures) that Binary Authorization verifies at the cluster edge.`
     },
+    {
+        cat: 'DevOps',
+        q: `Your SLO is failing due to a bad deployment. How do you perform a "Zero-Toil" rollback and a rapid Root Cause Analysis?`,
+        a: `Cloud Deploy "Roll back" + Gemini Cloud Assist Investigations.`,
+        d: `1. <b>Rollback</b>: Use the <b>Cloud Deploy Rollback</b> feature. It creates a new rollout from the <b>last known good release</b>, bypassing the build phase for speed.
+            2. <b>RCA</b>: Use <b>Gemini Cloud Assist</b> in Logs Explorer. Click <b>"Explain this log entry"</b> or start a <b>New Investigation</b> to correlate logs, metrics, and config changes.
+            3. <b>SLO Recovery</b>: Immediate rollback stops the <b>Error Budget</b> burn while Gemini identifies the bug for the "Roll Forward" fix.
+            4. <b>Gemini Cloud Assist</b>: Can generate LQL (Logging Query Language) via natural language to filter specific 5xx errors across multiple services.`,
+        t: `Heuristic: "Stop the bleeding" = Cloud Deploy Rollback. "Find the cause" = Gemini Investigations.`,
+        l: `Rollbacks are easy for stateless apps (Cloud Run/GKE); database migrations often require "Roll Forward" or manual data correction.`,
+        c: `Architect Tip: Enable <b>Automated Rollback</b> in Cloud Deploy using <b>Deployment Verification</b>. If the new release fails its own health check, Cloud Deploy will trigger the rollback without human intervention.`
+    },
     // --- CATEGORY: Altostrat Case Study ---
     {
         cat: 'Altostrat',
@@ -425,6 +449,105 @@ window.masterData = [
         t: 'Heuristic: "PB-scale cost optimization" = GCS Autoclass + GKE Autopilot.',
         l: 'Autoclass does not support objects smaller than 128KB for automatic transitions to colder tiers.',
         c: 'Retrieval costs (egress/access fees) for Archive class can be significant; ensure only truly "cold" data is tiered to Archive.',
+    },
+    {
+        cat: 'Cymbal Retail',
+        q: 'Requirement Mapping: Match these Cymbal Retail needs to their WAF Pillars:\n1. "Automate Product Catalog Enrichment (GenAI descriptions/images)."\n2. "Reduce data-center hosting and call center staffing costs."\n3. "Proactive monitoring and proactive error remediation."\n4. "Secure and efficient 3rd party integrations."',
+        a: '1. **Performance/Innovation**: Requires Vertex AI (Gemini) for content generation.\n2. **Cost Optimization**: Requires Cloud Run/GKE Autopilot + Conversational AI (Agent Builder).\n3. **Operational Excellence**: Requires Cloud Monitoring + Gemini Cloud Assist for infra health.\n4. **Security**: Requires Apigee + VPC Service Controls.',
+        d: 'Cymbal is modernizing from error-prone manual catalog/call processes to an AI-first "Conversational Commerce" model.',
+        t: 'Heuristic: "Manual catalog" + "Data Silos" = Vertex AI + BigQuery (Data Mesh).',
+        l: 'Data silos currently limit the "Unified view of the customer," necessitating a centralized data platform.',
+        c: 'Use GKE Autopilot for "Technical Stack Modernization" to pay only for pod usage, not idle nodes [CC-1].'
+    },
+    {
+        cat: 'Cymbal Retail',
+        q: 'Scenario: Cymbal wants to implement "Conversational Commerce" to allow customers to discover products via natural language on their app.',
+        a: 'Vertex AI Agent Builder + Discovery AI.',
+        d: '1. **UX**: Virtual agents integrated into the mobile app [BR].\n2. **Logic**: Discovery AI retrieves relevant products based on natural language intent.\n3. **Grounding**: The agent is grounded in the BigQuery product catalog to ensure accuracy.',
+        t: 'Heuristic: "Conversational Commerce" + "Discovery" = Vertex AI Agent Builder.',
+        l: 'Agent performance depends on the quality of catalog metadata (GenAI enrichment).',
+        c: 'Deploy via Cloud Run to scale to zero during off-peak hours, minimizing hosting costs.'
+    },
+    {
+        cat: 'Cymbal Retail',
+        q: 'Scenario: Cymbal needs to automate the generation of product attributes, descriptions, and images from supplier-provided data.',
+        a: 'Vertex AI Model Garden (Gemini 1.5 Pro) + Cloud Storage.',
+        d: '1. **Input**: Supplier files uploaded to GCS.\n2. **Processing**: Gemini 1.5 Pro (Multimodal) extracts attributes and writes descriptions.\n3. **Image Gen**: Imagen (via Vertex AI) creates product lifestyle images from descriptions.',
+        t: 'Heuristic: "Automate Catalog Enrichment" = Gemini + Imagen.',
+        l: 'GenAI output requires an "Audit" or "Human-in-the-loop" step to ensure brand consistency.',
+        c: 'Use BigQuery ML (BQML) to call Gemini directly from SQL for massive batch enrichment of existing catalogs.'
+    },
+    {
+        cat: 'EHR Healthcare',
+        q: 'Requirement Mapping: Match these EHR Healthcare needs to their WAF Pillars:\n1. "99.9% availability for customer-facing systems."\n2. "On-board new insurance providers as quickly as possible."\n3. "Consistent logging, retention, and alerting."\n4. "Decrease infrastructure administration costs."',
+        a: '1. **Reliability**: Requires multi-regional failover.\n2. **Operational Excellence**: Requires Apigee for standardized API onboarding.\n3. **Security/Operations**: Requires Cloud Operations Suite + BigQuery for long-term audit logs.\n4. **Cost Optimization**: Requires moving from self-managed servers to Managed Services (Cloud SQL).',
+        d: 'EHR is moving from high-toil colocation facilities to a managed, compliant hybrid environment.',
+        t: 'Heuristic: "Colocation lease expiring" + "Spikes causing outages" = Managed GKE + Cloud SQL + Interconnect.',
+        l: 'Regulatory compliance (HIPAA) requires a signed BAA and data residency controls, limiting some global service choices.',
+        c: 'Use Cloud SQL for MySQL/MS SQL to eliminate database patching toil [CC-1].'
+    },
+    {
+        cat: 'EHR Healthcare',
+        q: 'Scenario: EHR must maintain legacy file and API-based integrations with insurance providers on-premises for several years while moving core apps to GCP. How do you ensure high-performance, private connectivity?',
+        a: 'Dedicated Interconnect (99.99% configuration) + GKE Enterprise (Anthos).',
+        d: '1. **Connectivity**: Dedicated Interconnect provides the "high-performance" private path [TR-2].\n2. **Management**: GKE Enterprise (Anthos) manages clusters across GCP and the remaining colocation sites [TR-1].\n3. **Identity**: Workload Identity Federation for on-prem pods to call GCP APIs securely.',
+        t: 'Heuristic: "Legacy systems stay on-prem" + "Secure/High-performance" = Dedicated Interconnect.',
+        l: 'Dedicated Interconnect has a 6-8 week lead time for physical circuit provisioning.',
+        c: 'Configure 4 circuits (2 per metro, 2 metros) for the 99.99% availability target [BR-1].'
+    },
+    {
+        cat: 'EHR Healthcare',
+        q: 'Scenario: EHR needs to process clinical notes to identify trends while adhering to strict HIPAA de-identification requirements.',
+        a: 'Cloud Dataflow + Sensitive Data Protection (DLP) + Gemini 1.5 Flash.',
+        d: '1. **Pipeline**: Dataflow orchestrates the flow.\n2. **Compliance**: Sensitive Data Protection (formerly DLP) de-identifies PII/PHI before storage.\n3. **Intelligence**: Gemini 1.5 Flash summarizes notes for doctors [Modern AI Requirement].',
+        t: 'Heuristic: "PII/PHI" + "Healthcare Data" = Sensitive Data Protection (DLP) + Healthcare API.',
+        l: 'Gemini usage must be scoped within a HIPAA-compliant project boundary.',
+        c: 'Use Firestore (Datastore mode) if patient data requires high-frequency mobile sync and real-time updates.'
+    },
+    {
+        cat: 'KnightMotives',
+        q: 'Requirement Mapping: Match these KnightMotives needs to their WAF Pillars:\n1. "Deliver a cohesive experience across all models (BEV, hybrid, ICE)."\n2. "Improve their unreliable online build-to-order system."\n3. "Monetize corporate data to finance new technology."\n4. "Adherence to EU data protection (GDPR) for autonomous platforms."',
+        a: '1. **Performance**: Intent is unified compute via GKE Enterprise.\n2. **Reliability**: Intent is a transactional microservices architecture (Spanner/GKE).\n3. **Cost Optimization**: Intent is a Data Lakehouse (BigQuery) with Analytics Hub.\n4. **Security**: Intent is Assured Workloads + VPC Service Controls.',
+        d: 'KnightMotives is shifting from a hardware-first to an "Automotive Experience" model, requiring global hybrid-cloud consistency.',
+        t: 'Heuristic: "Rural connectivity" + "Offline Safety" = GDC Edge. "Monetize Data" = BigQuery Analytics Hub.',
+        l: 'WAF Trade-off: Implementing 99.99% reliability for on-prem supply chain links significantly increases networking costs.',
+        c: 'The PCA exam focuses on "Managed-Service Bias"—prefer Cloud Run for the dealer portal unless GKE is specifically needed for legacy dependencies.',
+    },
+    {
+        cat: 'KnightMotives',
+        q: 'Scenario: KnightMotives needs to modernize their build-to-order system. Requirements: Support dealers with "no budget for new equipment" [CC-2], connect to an "outdated mainframe" supply chain [TR-1], and provide global transactional consistency for orders.',
+        a: 'Apigee Hybrid + Cloud Spanner + Identity-Aware Proxy (IAP).',
+        d: '1. **Legacy**: Apigee Hybrid (Runtime on-prem) "wraps" the mainframe to provide modern JSON APIs.\n2. **Database**: Cloud Spanner provides global consistency for complex vehicle configurations.\n3. **Access**: IAP allows dealers to use existing browser-based hardware without a VPN.',
+        t: 'Heuristic: "Outdated Mainframe" + "Dealer Web Access" = Apigee + IAP.',
+        l: 'Mainframes cannot be "Lifted & Shifted" easily; abstraction (API) is the first architectural step.',
+        c: 'Use Private Service Connect (PSC) to securely link the GKE Autopilot cloud app to the on-prem Apigee runtime plane.',
+    },
+    {
+        cat: 'KnightMotives',
+        q: 'Scenario: KnightMotives wants to monetize corporate data while adhering to strict EU GDPR regulations for autonomous platforms.',
+        a: 'BigQuery Analytics Hub + Assured Workloads + Sensitive Data Protection (DLP).',
+        d: '1. **Monetization**: Analytics Hub allows 3rd parties to query data without making copies (Zero-copy sharing).\n2. **Compliance**: Assured Workloads enforces EU data residency for driver telemetry.\n3. **Privacy**: Sensitive Data Protection (DLP) masks VINs and GPS data before sharing.',
+        t: 'Heuristic: "Monetize Siloed Data" + "GDPR" = BigQuery Analytics Hub + Assured Workloads.',
+        l: 'Linked datasets in Analytics Hub are read-only; subscribers pay for their own query compute.',
+        c: 'Use "Crypto-shredding" (destroying user-specific KMS keys) to satisfy the GDPR "Right to be Forgotten" in large datasets.',
+    },
+    {
+        cat: 'KnightMotives',
+        q: 'Scenario: Autonomous vehicles must make safety-critical decisions in rural areas with "unreliable network connectivity" [TR-1] while providing an AI-powered UX.',
+        a: 'Google Distributed Cloud (GDC) Edge + GKE Enterprise + Gemini 1.5 Flash.',
+        d: '1. **Edge**: GDC Edge provides local, low-latency compute for autonomous logic.\n2. **Safety**: Local GKE nodes run ML inference for braking/steering when offline.\n3. **UX**: Gemini 1.5 Flash generates local, natural language alerts for the driver dashboard.',
+        t: 'Heuristic: "Safety-Critical" + "Disconnected/Rural" = GDC Edge / Anthos.',
+        l: 'Edge hardware in vehicles has physical thermal and power constraints compared to data centers.',
+        c: 'Use Workload Identity Federation for vehicles to securely "phone home" telemetry to Pub/Sub once they regain a 5G signal.',
+    },
+    {
+        cat: 'KnightMotives',
+        q: 'Scenario: KnightMotives has a "paramount concern" regarding data breaches and must prevent the exfiltration of autonomous vehicle intellectual property.',
+        a: 'VPC Service Controls (VPC-SC) + Cloud Armor + Cloud KMS.',
+        d: '1. **Exfiltration**: VPC Service Controls draws a perimeter around BigQuery and GCS to block unauthorized external copies.\n2. **External Defense**: Cloud Armor WAF protects the Dealer and Build-to-Order portals from SQL injection.\n3. **Encryption**: Cloud KMS with CMEK ensures KnightMotives manages the keys for all stored telemetry.',
+        t: 'Heuristic: "Prevent Exfiltration" + "Intellectual Property" = VPC Service Controls.',
+        l: 'VPC-SC can block legitimate cross-project access if "Ingress/Egress rules" are not correctly configured.',
+        c: 'Combine VPC-SC with Access Context Manager to allow access only from "Known IP ranges" (Dealers/Plants).',
     },
     // --- CATEGORY: FINAL (The 10-Minute Pre-Test Sprint) ---
     {
@@ -523,5 +646,17 @@ window.masterData = [
         a: 'Zonal = 1 Master. Regional = 3 Masters (in 3 different zones).',
         d: 'Always choose Regional clusters for production workloads to ensure the Kubernetes API remains available during a zonal outage.',
         t: 'Heuristic: "Regional GKE = HA Control Plane."'
+    },
+    {
+        cat: 'Final',
+        q: `Scenario: Migrate 200TB of Hadoop data over a shared 1Gbps link and ensure 10-year immutability. What is the architecture?`,
+        a: `Transfer Appliance + GCS Bucket Lock.`,
+        d: `1. <b>Migration</b>: 200TB at 1Gbps takes ~19+ days. Use <b>Transfer Appliance</b> to avoid network saturation and meet the "1-week rule."
+            2. <b>Ingest</b>: Use <b>Storage Transfer Service</b> to move data from the appliance's landing bucket to the production bucket if needed.
+            3. <b>Compliance</b>: Set a <b>Retention Policy</b> (10 years) and use <b>Bucket Lock</b> to make the policy immutable and irreversible.
+            4. <b>Security</b>: Ensure <b>Detailed Audit Logging</b> is enabled to track all access attempts for the 10-year duration.`,
+        t: `Heuristic: ">20TB or >1 Week = Appliance." "Immutable = Bucket Lock."`,
+        l: `Locked policies cannot be shortened or removed. If you accidentally lock 1PB for 100 years, you are paying for that storage for a century.`,
+        c: `Architect Tip: For Hadoop migrations, use the <b>GCS Connector for Hadoop</b> so your cloud-based Spark/Dataproc jobs can treat GCS as a drop-in replacement for HDFS.`
     },
 ];
